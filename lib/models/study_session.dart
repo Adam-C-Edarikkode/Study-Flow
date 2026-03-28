@@ -16,10 +16,14 @@ class StudySession extends HiveObject {
   @HiveField(3)
   DateTime date;
 
+  @HiveField(4, defaultValue: null)
+  String? chapterId;
+
   StudySession({
     required this.id,
     required this.subjectId,
     required this.durationMinutes,
     required this.date,
+    this.chapterId,
   });
 }

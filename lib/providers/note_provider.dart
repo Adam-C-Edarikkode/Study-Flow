@@ -12,6 +12,8 @@ class NoteProvider with ChangeNotifier {
     _loadAllNotes();
   }
 
+  List<Note> get allNotes => _allNotes;
+
   void _loadAllNotes() {
     _allNotes = HiveService.notesBox.values.toList();
     _allNotes.sort((a, b) => b.lastEdited.compareTo(a.lastEdited)); // Newest edited first
@@ -48,6 +50,17 @@ class NoteProvider with ChangeNotifier {
 
   void deleteNote(String noteId) {
     HiveService.notesBox.delete(noteId);
+    _loadAllNotes();
+  }
+
+  void deleteNotesForChapter(String chapterId) {
+    final keysToDelete = HiveService.notesBox.values
+        .where((n) => n.chapterId == chapterId)
+        .map((n) => n.id)
+        .toList();
+    for (var key in keysToDelete) {
+      HiveService.notesBox.delete(key);
+    }
     _loadAllNotes();
   }
 

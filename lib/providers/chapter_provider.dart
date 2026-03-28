@@ -11,6 +11,8 @@ class ChapterProvider with ChangeNotifier {
     _loadAllChapters();
   }
 
+  List<Chapter> get chapters => _allChapters;
+
   void _loadAllChapters() {
     _allChapters = HiveService.chaptersBox.values.toList();
     _allChapters.sort((a, b) => a.createdDate.compareTo(b.createdDate));
@@ -46,6 +48,17 @@ class ChapterProvider with ChangeNotifier {
 
   void deleteChapter(String id) {
     HiveService.chaptersBox.delete(id);
+    _loadAllChapters();
+  }
+
+  void deleteChaptersForSubject(String subjectId) {
+    final keysToDelete = HiveService.chaptersBox.values
+        .where((c) => c.subjectId == subjectId)
+        .map((c) => c.id)
+        .toList();
+    for (var key in keysToDelete) {
+      HiveService.chaptersBox.delete(key);
+    }
     _loadAllChapters();
   }
 }

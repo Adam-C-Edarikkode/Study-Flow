@@ -1,42 +1,42 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'study_session.dart';
+part of 'flashcard.dart';
 
 // **************************************************************************
 // TypeAdapterGenerator
 // **************************************************************************
 
-class StudySessionAdapter extends TypeAdapter<StudySession> {
+class FlashcardAdapter extends TypeAdapter<Flashcard> {
   @override
-  final int typeId = 5;
+  final int typeId = 8;
 
   @override
-  StudySession read(BinaryReader reader) {
+  Flashcard read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return StudySession(
-      id: fields[0] as String,
-      subjectId: fields[1] as String,
-      durationMinutes: fields[2] as int,
-      date: fields[3] as DateTime,
+    return Flashcard(
+      id: fields[0] as String?,
+      front: fields[1] as String,
+      back: fields[2] as String,
+      subjectId: fields[3] as String?,
       chapterId: fields[4] as String?,
     );
   }
 
   @override
-  void write(BinaryWriter writer, StudySession obj) {
+  void write(BinaryWriter writer, Flashcard obj) {
     writer
       ..writeByte(5)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
-      ..write(obj.subjectId)
+      ..write(obj.front)
       ..writeByte(2)
-      ..write(obj.durationMinutes)
+      ..write(obj.back)
       ..writeByte(3)
-      ..write(obj.date)
+      ..write(obj.subjectId)
       ..writeByte(4)
       ..write(obj.chapterId);
   }
@@ -47,7 +47,7 @@ class StudySessionAdapter extends TypeAdapter<StudySession> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is StudySessionAdapter &&
+      other is FlashcardAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

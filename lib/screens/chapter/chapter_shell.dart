@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:study_app/models/chapter.dart';
 import 'package:study_app/screens/chapter/tabs/chapter_notes_tab.dart';
 import 'package:study_app/screens/chapter/tabs/chapter_add_time_tab.dart';
+import 'package:study_app/screens/chapter/tabs/chapter_performance_tab.dart';
+import 'package:study_app/screens/global/tools_page.dart';
 
 class ChapterShell extends StatelessWidget {
   final Chapter chapter;
@@ -49,9 +51,9 @@ class ChapterShell extends StatelessWidget {
         body: TabBarView(
           children: [
             ChapterNotesTab(chapterId: chapter.id),
-            const _MockPaddedText('Chapter specific flashcards, mind maps, and task checklists.'),
-            ChapterAddTimeTab(subjectId: chapter.subjectId),
-            _MockPaddedText('Time spent and progress charts for ${chapter.title}.'),
+            ToolsGrid(specificSubjectId: chapter.subjectId, specificChapterId: chapter.id),
+            ChapterAddTimeTab(subjectId: chapter.subjectId, chapterId: chapter.id),
+            ChapterPerformanceTab(subjectId: chapter.subjectId, chapterId: chapter.id),
           ],
         ),
       ),
@@ -59,21 +61,4 @@ class ChapterShell extends StatelessWidget {
   }
 }
 
-class _MockPaddedText extends StatelessWidget {
-  final String text;
-  const _MockPaddedText(this.text);
 
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Text(
-          text,
-          textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.grey[600], fontSize: 16),
-        ),
-      ),
-    );
-  }
-}

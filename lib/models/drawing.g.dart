@@ -1,44 +1,44 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'study_session.dart';
+part of 'drawing.dart';
 
 // **************************************************************************
 // TypeAdapterGenerator
 // **************************************************************************
 
-class StudySessionAdapter extends TypeAdapter<StudySession> {
+class DrawingAdapter extends TypeAdapter<Drawing> {
   @override
-  final int typeId = 5;
+  final int typeId = 11;
 
   @override
-  StudySession read(BinaryReader reader) {
+  Drawing read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return StudySession(
-      id: fields[0] as String,
-      subjectId: fields[1] as String,
-      durationMinutes: fields[2] as int,
-      date: fields[3] as DateTime,
-      chapterId: fields[4] as String?,
+    return Drawing(
+      id: fields[0] as String?,
+      title: fields[1] as String,
+      subjectId: fields[2] as String?,
+      chapterId: fields[3] as String?,
+      encodedPaths: fields[4] as String,
     );
   }
 
   @override
-  void write(BinaryWriter writer, StudySession obj) {
+  void write(BinaryWriter writer, Drawing obj) {
     writer
       ..writeByte(5)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
-      ..write(obj.subjectId)
+      ..write(obj.title)
       ..writeByte(2)
-      ..write(obj.durationMinutes)
+      ..write(obj.subjectId)
       ..writeByte(3)
-      ..write(obj.date)
+      ..write(obj.chapterId)
       ..writeByte(4)
-      ..write(obj.chapterId);
+      ..write(obj.encodedPaths);
   }
 
   @override
@@ -47,7 +47,7 @@ class StudySessionAdapter extends TypeAdapter<StudySession> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is StudySessionAdapter &&
+      other is DrawingAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

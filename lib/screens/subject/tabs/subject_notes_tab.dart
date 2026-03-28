@@ -5,20 +5,20 @@ import 'package:study_app/widgets/custom_card.dart';
 import 'package:study_app/screens/chapter/note_editor_screen.dart';
 import 'package:intl/intl.dart';
 
-class ChapterNotesTab extends StatelessWidget {
-  final String chapterId;
+class SubjectNotesTab extends StatelessWidget {
+  final String subjectId;
 
-  const ChapterNotesTab({super.key, required this.chapterId});
+  const SubjectNotesTab({super.key, required this.subjectId});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Consumer<NoteProvider>(
         builder: (context, noteProvider, child) {
-          final notes = noteProvider.getNotesForChapter(chapterId);
+          final notes = noteProvider.getNotesForChapter(subjectId);
 
           if (notes.isEmpty) {
-            return const Center(child: Text("No notes yet. Create one!"));
+            return const Center(child: Text("No subject notes yet. Create one!"));
           }
 
           return ListView.builder(
@@ -54,7 +54,6 @@ class ChapterNotesTab extends StatelessWidget {
                             style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey),
                           ),
                         ],
-                        
                       )
                     ],
                   ),
@@ -67,7 +66,7 @@ class ChapterNotesTab extends StatelessWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddNoteDialog(context),
         icon: const Icon(Icons.note_add),
-        label: const Text('New Note'),
+        label: const Text('New subject note'),
       ),
     );
   }
@@ -79,7 +78,7 @@ class ChapterNotesTab extends StatelessWidget {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Create Note'),
+          title: const Text('Create Subject Note'),
           content: TextField(
             controller: titleController,
             decoration: const InputDecoration(labelText: 'Note Title'),
@@ -93,7 +92,7 @@ class ChapterNotesTab extends StatelessWidget {
               onPressed: () {
                 if (titleController.text.isNotEmpty) {
                   Provider.of<NoteProvider>(context, listen: false).addNote(
-                    chapterId,
+                    subjectId, // Passing subjectId as chapterId because UUIDs are unique
                     titleController.text,
                   );
                   Navigator.pop(context);

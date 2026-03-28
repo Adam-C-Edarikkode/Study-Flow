@@ -82,6 +82,13 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
             title: const Text('Edit Note'),
             actions: [
               IconButton(
+                icon: const Icon(Icons.delete_outline),
+                onPressed: () {
+                   Provider.of<NoteProvider>(context, listen: false).deleteNote(widget.noteId);
+                   Navigator.pop(context);
+                },
+              ),
+              IconButton(
                 icon: const Icon(Icons.check),
                 onPressed: () {
                   _titleFocus.unfocus(); // Saves title
@@ -111,15 +118,20 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                     itemBuilder: (context, index) {
                       final block = blocks[index];
                       // Reusable block editor tile
-                      return Container(
+                      return Dismissible(
                         key: ValueKey(block.id),
-                        margin: const EdgeInsets.symmetric(vertical: 4),
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.withAlpha(25), // slight highlight
-                          borderRadius: BorderRadius.circular(8),
+                        direction: DismissDirection.endToStart,
+                        background: Container(
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.only(right: 20),
+                          color: Colors.red,
+                          child: const Icon(Icons.delete, color: Colors.white),
                         ),
-                        child: _buildBlockWidget(context, block, noteProvider),
+                        onDismissed: (_) {
+                          Provider.of<NoteProvider>(context, listen: false)
+                              .deleteBlock(widget.noteId, block.id);
+                        },
+                        child: _BlockEditor(block: block, noteId: widget.noteId),
                       );
                     },
                   ),
@@ -155,122 +167,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     );
   }
 
-  Widget _buildBlockWidget(BuildContext context, Block block, NoteProvider provider) {
-    final TextEditingController textController = TextEditingController(text: block.content);
-    
-    Widget contentWidget;
-
-    switch (block.type) {
-      case BlockType.heading:
-        contentWidget = TextField(
-          controller: textController,
-          style: Theme.of(context).textTheme.headlineMedium,
-          decoration: const InputDecoration(border: InputBorder.none, hintText: 'Heading...'),
-          onSubmitted: (val) => provider.updateBlockContent(widget.noteId, block.id, val),
-        );
-        break;
-      case BlockType.text:
-         contentWidget = TextField(
-          controller: textController,
-          style: Theme.of(context).textTheme.bodyLarge,
-          maxLines: null,
-          decoration: const InputDecoration(border: InputBorder.none, hintText: 'Text...'),
-          onSubmitted: (val) => provider.updateBlockContent(widget.noteId, block.id, val),
-        );
-        break;
-      case BlockType.bullet:
-        contentWidget = Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Padding(padding: EdgeInsets.only(top: 8.0, right: 8.0), child: Text("•", style: TextStyle(fontSize: 18))),
-            Expanded(
-              child: TextField(
-                controller: textController,
-                style: Theme.of(context).textTheme.bodyLarge,
-                maxLines: null,
-                decoration: const InputDecoration(border: InputBorder.none, hintText: 'Bullet point...'),
-                onSubmitted: (val) => provider.updateBlockContent(widget.noteId, block.id, val),
-              ),
-            ),
-          ],
-        );
-        break;
-      case BlockType.checkbox:
-        contentWidget = Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Checkbox(
-              value: block.isChecked,
-              onChanged: (val) => provider.toggleCheckboxBlock(widget.noteId, block.id),
-            ),
-            Expanded(
-              child: TextField(
-                controller: textController,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  decoration: block.isChecked ? TextDecoration.lineThrough : null,
-                  color: block.isChecked ? Colors.grey : null,
-                ),
-                maxLines: null,
-                decoration: const InputDecoration(border: InputBorder.none, hintText: 'Task...'),
-                onSubmitted: (val) => provider.updateBlockContent(widget.noteId, block.id, val),
-              ),
-            ),
-          ],
-        );
-        break;
-      case BlockType.link:
-        contentWidget = Row(
-          children: [
-            const Icon(Icons.link, color: Colors.blue),
-            const SizedBox(width: 8),
-            Expanded(
-              child: TextField(
-                controller: textController,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.blue),
-                decoration: const InputDecoration(border: InputBorder.none, hintText: 'Link...'),
-                onSubmitted: (val) => provider.updateBlockContent(widget.noteId, block.id, val),
-              ),
-            ),
-          ],
-        );
-        break;
-    }
-
-    // Need a manual save button for textfields or rely on focus nodes per block (complex).
-    // For simplicity, we add a save icon to each block.
-    /* return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.only(top: 12.0, right: 8.0),
-          child: Icon(Icons.drag_indicator, color: Colors.grey),
-        ),
-        Expanded(child: contentWidget),
-        IconButton(
-          icon: const Icon(Icons.save_outlined, size: 20, color: Colors.grey),
-          onPressed: () {
-            provider.updateBlockContent(widget.noteId, block.id, textController.text);
-            FocusScope.of(context).unfocus();
-          },
-        ),
-        IconButton(
-          icon: const Icon(Icons.delete_outline, size: 20, color: Colors.red),
-          onPressed: () => provider.deleteBlock(widget.noteId, block.id),
-        ),
-      ],
-    ); */
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.only(top: 12.0, right: 8.0),
-        ),
-        Expanded(child: contentWidget),
-      ],
-    );
-  }
-
   Widget _buildBlockToolbar(BuildContext context, NoteProvider provider) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
@@ -303,6 +199,163 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         avatar: Icon(icon, size: 18),
         label: Text(label),
         onPressed: onTap,
+      ),
+    );
+  }
+}
+
+class _BlockEditor extends StatefulWidget {
+  final Block block;
+  final String noteId;
+
+  const _BlockEditor({required this.block, required this.noteId});
+
+  @override
+  State<_BlockEditor> createState() => _BlockEditorState();
+}
+
+class _BlockEditorState extends State<_BlockEditor> {
+  late TextEditingController _controller;
+  late FocusNode _focusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.block.content);
+    _focusNode = FocusNode();
+    _focusNode.addListener(_onFocusChange);
+  }
+
+  @override
+  void didUpdateWidget(_BlockEditor oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.block.id != widget.block.id) {
+      _controller.text = widget.block.content;
+    }
+  }
+
+  void _onFocusChange() {
+    if (!_focusNode.hasFocus) {
+      Provider.of<NoteProvider>(context, listen: false)
+          .updateBlockContent(widget.noteId, widget.block.id, _controller.text);
+    }
+    setState(() {}); // Rebuild to toggle delete icon visibility
+  }
+
+  @override
+  void dispose() {
+    _focusNode.removeListener(_onFocusChange);
+    _focusNode.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = Provider.of<NoteProvider>(context, listen: false);
+    Widget contentWidget;
+
+    switch (widget.block.type) {
+      case BlockType.heading:
+        contentWidget = TextField(
+          controller: _controller,
+          focusNode: _focusNode,
+          style: Theme.of(context).textTheme.headlineMedium,
+          decoration: const InputDecoration(border: InputBorder.none, hintText: 'Heading...'),
+          textInputAction: TextInputAction.done,
+          onSubmitted: (val) {
+            provider.updateBlockContent(widget.noteId, widget.block.id, val);
+            FocusScope.of(context).unfocus();
+          },
+        );
+        break;
+      case BlockType.text:
+         contentWidget = TextField(
+          controller: _controller,
+          focusNode: _focusNode,
+          style: Theme.of(context).textTheme.bodyLarge,
+          maxLines: null,
+          decoration: const InputDecoration(border: InputBorder.none, hintText: 'Text...', isDense: true, contentPadding: EdgeInsets.symmetric(vertical: 2.0)),
+        );
+        break;
+      case BlockType.bullet:
+        contentWidget = Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(padding: EdgeInsets.only(top: 6.0, right: 8.0), child: Text("•", style: TextStyle(fontSize: 18))),
+            Expanded(
+              child: TextField(
+                controller: _controller,
+                focusNode: _focusNode,
+                style: Theme.of(context).textTheme.bodyLarge,
+                maxLines: null,
+                decoration: const InputDecoration(border: InputBorder.none, hintText: 'Bullet point...', isDense: true, contentPadding: EdgeInsets.symmetric(vertical: 2.0)),
+              ),
+            ),
+          ],
+        );
+        break;
+      case BlockType.checkbox:
+        contentWidget = Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Checkbox(
+              value: widget.block.isChecked,
+              onChanged: (val) {
+                provider.toggleCheckboxBlock(widget.noteId, widget.block.id);
+                setState(() => widget.block.isChecked = val ?? false);
+              },
+            ),
+            Expanded(
+              child: TextField(
+                controller: _controller,
+                focusNode: _focusNode,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  decoration: widget.block.isChecked ? TextDecoration.lineThrough : null,
+                  color: widget.block.isChecked ? Colors.grey : null,
+                ),
+                maxLines: null,
+                decoration: const InputDecoration(border: InputBorder.none, hintText: 'Task...'),
+              ),
+            ),
+          ],
+        );
+        break;
+      case BlockType.link:
+        contentWidget = Row(
+          children: [
+            const Icon(Icons.link, color: Colors.blue),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextField(
+                controller: _controller,
+                focusNode: _focusNode,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.blue),
+                decoration: const InputDecoration(border: InputBorder.none, hintText: 'Link...'),
+              ),
+            ),
+          ],
+        );
+        break;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: contentWidget),
+          if (_focusNode.hasFocus || _controller.text.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0, left: 8.0),
+              child: IconButton(
+                icon: const Icon(Icons.close, size: 16, color: Colors.grey),
+                onPressed: () => provider.deleteBlock(widget.noteId, widget.block.id),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ),
+        ],
       ),
     );
   }

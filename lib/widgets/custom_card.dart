@@ -4,6 +4,7 @@ import 'package:study_app/theme/app_theme.dart';
 class CustomCard extends StatelessWidget {
   final Widget child;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
   final EdgeInsetsGeometry padding;
   final Gradient? gradient;
   final Color? color;
@@ -15,6 +16,7 @@ class CustomCard extends StatelessWidget {
     super.key,
     required this.child,
     this.onTap,
+    this.onLongPress,
     this.padding = const EdgeInsets.all(16.0),
     this.gradient,
     this.color,
@@ -44,6 +46,7 @@ class CustomCard extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
           onTap: onTap,
+          onLongPress: onLongPress,
           child: Padding(
             padding: padding,
             child: child,

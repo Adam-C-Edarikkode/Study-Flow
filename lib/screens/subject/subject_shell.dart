@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:study_app/theme/app_theme.dart';
 import 'package:study_app/models/subject.dart';
 import 'package:study_app/screens/subject/tabs/subject_chapters_tab.dart';
-// Note: We'll create placeholders for these below or in separate files.
+import 'package:study_app/screens/subject/tabs/subject_notes_tab.dart';
+import 'package:study_app/screens/chapter/tabs/chapter_add_time_tab.dart';
+import 'package:study_app/screens/subject/tabs/subject_performance_tab.dart';
+import 'package:study_app/screens/global/tools_page.dart';
 
 class SubjectShell extends StatelessWidget {
   final Subject subject;
@@ -39,10 +42,10 @@ class SubjectShell extends StatelessWidget {
         body: TabBarView(
           children: [
             SubjectChaptersTab(subjectId: subject.id),
-            Center(child: Text('Subject General Notes')), // Placeholder
-            Center(child: Text('Subject Wide Tools')),    // Placeholder
-            Center(child: Text('Add Time to Subject')),     // Placeholder
-            Center(child: Text('Subject Performance')),     // Placeholder
+            SubjectNotesTab(subjectId: subject.id),
+            ToolsGrid(specificSubjectId: subject.id),
+            ChapterAddTimeTab(subjectId: subject.id), // Resuing this widget for subjects too
+            SubjectPerformanceTab(subjectId: subject.id),
           ],
         ),
       ),

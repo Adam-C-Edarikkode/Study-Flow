@@ -4,6 +4,8 @@ import 'package:study_app/theme/app_theme.dart';
 import 'package:study_app/widgets/custom_card.dart';
 import 'package:study_app/screens/chapter/chapter_shell.dart';
 import 'package:study_app/providers/chapter_provider.dart';
+import 'package:study_app/providers/study_provider.dart';
+import 'package:study_app/providers/note_provider.dart';
 
 class SubjectChaptersTab extends StatelessWidget {
   final String subjectId;
@@ -39,6 +41,7 @@ class SubjectChaptersTab extends StatelessWidget {
                       ),
                     );
                   },
+                  onLongPress: () => _showDeleteChapterDialog(context, chapter),
                   child: Row(
                     children: [
                       Container(
@@ -66,13 +69,15 @@ class SubjectChaptersTab extends StatelessWidget {
                               style: Theme.of(context).textTheme.titleLarge,
                             ),
                             const SizedBox(height: 4),
-                            if (chapter.description.isNotEmpty)
-                              Text(
-                                chapter.description,
-                                style: Theme.of(context).textTheme.bodyMedium,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                            Consumer<NoteProvider>(
+                              builder: (context, noteProvider, child) {
+                                final notesCount = noteProvider.getNotesForChapter(chapter.id).length;
+                                return Text(
+                                  '$notesCount note${notesCount == 1 ? '' : 's'}',
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade700),
+                                );
+                              },
+                            ),
                             const SizedBox(height: 8),
                             // In a full implementation, you'd calculate progress here
                             /* LinearProgressIndicator(
@@ -85,6 +90,10 @@ class SubjectChaptersTab extends StatelessWidget {
                           ],
                         ),
                       ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline, color: Colors.red),
+                        onPressed: () => _showDeleteChapterDialog(context, chapter),
+                      ),
                     ],
                   ),
                 ),
@@ -93,10 +102,9 @@ class SubjectChaptersTab extends StatelessWidget {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddChapterDialog(context),
-        icon: const Icon(Icons.add),
-        label: const Text('Add Chapter'),
+        child: const Icon(Icons.add),
       ),
     );
   }
@@ -142,6 +150,33 @@ class SubjectChaptersTab extends StatelessWidget {
                 }
               },
               child: const Text('Add'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showDeleteChapterDialog(BuildContext context, dynamic chapter) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Delete Chapter?'),
+          content: Text('Are you sure you want to delete "${chapter.title}"?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () {
+                Provider.of<ChapterProvider>(context, listen: false).deleteChapter(chapter.id);
+                Provider.of<StudyProvider>(context, listen: false).deleteSessionsForChapter(chapter.id);
+                Navigator.pop(context);
+              },
+              child: const Text('Delete', style: TextStyle(color: Colors.white)),
             ),
           ],
         );

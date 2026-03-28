@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:study_app/theme/app_theme.dart';
 import 'package:study_app/widgets/custom_card.dart';
+import 'package:provider/provider.dart';
+import 'package:study_app/providers/theme_provider.dart';
+import 'package:study_app/database/hive_service.dart';
+import 'package:study_app/screens/global/settings_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -20,13 +24,19 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile'),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_rounded),
-            onPressed: () {},
+            onPressed: () async {
+               await Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsPage()));
+               if (!mounted) return;
+               setState(() {}); // Refresh name changes
+            },
           ),
         ],
       ),
@@ -48,12 +58,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   leading: const Icon(Icons.dark_mode_rounded),
                   title: const Text('Dark Mode'),
                   trailing: Switch(
-                    value: _isDarkMode,
+                    value: themeProvider.isDarkMode,
                     onChanged: (value) {
-                      setState(() {
-                        _isDarkMode = value;
-                        // TODO: Implement actual theme toggling logic using a state manager
-                      });
+                      themeProvider.toggleTheme(value);
                     },
                   ),
                 ),
@@ -102,11 +109,21 @@ class _ProfilePageState extends State<ProfilePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Student User',
-                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                        color: Colors.white,
-                      ),
+                Row(
+                  children: [
+                    Text(
+                      HiveService.settingsBox.get('student_name', defaultValue: 'Student User'),
+                      style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                            color: Colors.white,
+                          ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.edit, color: Colors.white70, size: 20),
+                      onPressed: () => _showEditNameDialog(context),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -120,6 +137,39 @@ class _ProfilePageState extends State<ProfilePage> {
           )
         ],
       ),
+    );
+  }
+
+  void _showEditNameDialog(BuildContext context) {
+    final controller = TextEditingController(text: HiveService.settingsBox.get('student_name', defaultValue: 'Student User'));
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Edit Name'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(labelText: 'Your Name'),
+            textCapitalization: TextCapitalization.words,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (controller.text.isNotEmpty) {
+                  HiveService.settingsBox.put('student_name', controller.text);
+                  setState(() {}); // Rebuild header
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

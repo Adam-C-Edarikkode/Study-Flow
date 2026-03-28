@@ -6,7 +6,10 @@ import 'package:study_app/screens/subject/subject_shell.dart';
 import 'package:study_app/providers/subject_provider.dart';
 import 'package:study_app/providers/chapter_provider.dart';
 import 'package:study_app/providers/study_provider.dart';
+import 'package:study_app/providers/note_provider.dart';
+import 'package:study_app/providers/todo_provider.dart';
 import 'package:study_app/models/subject.dart';
+import 'package:study_app/screens/global/search_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -19,11 +22,13 @@ class HomeScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.search_rounded),
-            onPressed: () {},
+            onPressed: () {
+               Navigator.push(context, MaterialPageRoute(builder: (_) => const SearchScreen()));
+            },
           ),
           IconButton(
             icon: const Icon(Icons.notifications_none_rounded),
-            onPressed: () {},
+            onPressed: () => _showNotifications(context),
           ),
         ],
       ),
@@ -74,6 +79,7 @@ class HomeScreen extends StatelessWidget {
               ),
             );
           },
+          onLongPress: () => _showDeleteSubjectDialog(context, subject),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -86,17 +92,25 @@ class HomeScreen extends StatelessWidget {
                           color: Colors.white,
                         ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withAlpha(51),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      color: Colors.white,
-                      size: 16,
-                    ),
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline, color: Colors.white),
+                        onPressed: () => _showDeleteSubjectDialog(context, subject),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withAlpha(51),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -220,6 +234,109 @@ class HomeScreen extends StatelessWidget {
           ),
         );
       }
+    );
+  }
+
+  void _showDeleteSubjectDialog(BuildContext context, Subject subject) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Delete Subject?'),
+          content: Text('Are you sure you want to delete "${subject.name}"? This action cannot be undone.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () {
+                final subjectId = subject.id;
+                
+                // Get all chapters to delete their specific data
+                final chapterIds = Provider.of<ChapterProvider>(context, listen: false)
+                    .getChaptersForSubject(subjectId)
+                    .map((c) => c.id)
+                    .toList();
+                
+                // Delete notes and sessions for each chapter
+                for (final cId in chapterIds) {
+                  Provider.of<NoteProvider>(context, listen: false).deleteNotesForChapter(cId);
+                  Provider.of<StudyProvider>(context, listen: false).deleteSessionsForChapter(cId);
+                }
+                
+                // Delete subject-level notes
+                Provider.of<NoteProvider>(context, listen: false).deleteNotesForChapter(subjectId);
+                
+                // Delete subject-level sessions
+                Provider.of<StudyProvider>(context, listen: false).deleteSessionsForSubject(subjectId);
+                
+                // Delete all chapters in subject
+                Provider.of<ChapterProvider>(context, listen: false).deleteChaptersForSubject(subjectId);
+
+                // Finally delete subject
+                Provider.of<SubjectProvider>(context, listen: false).deleteSubject(subjectId);
+                Navigator.pop(context);
+              },
+              child: const Text('Delete', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showNotifications(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.5,
+          maxChildSize: 0.9,
+          builder: (context, scrollController) {
+            return Consumer<TodoProvider>(
+              builder: (context, provider, child) {
+                final incompleted = provider.todos.where((t) => !t.isCompleted).toList();
+                
+                return Column(
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Text('Pending Tasks', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    ),
+                    const Divider(height: 1),
+                    Expanded(
+                      child: incompleted.isEmpty 
+                        ? const Center(child: Text('All caught up!'))
+                        : ListView.builder(
+                            controller: scrollController,
+                            itemCount: incompleted.length,
+                            itemBuilder: (context, index) {
+                              final task = incompleted[index];
+                              return ListTile(
+                                leading: const Icon(Icons.circle_outlined, color: Colors.grey),
+                                title: Text(task.task),
+                                trailing: IconButton(
+                                   icon: const Icon(Icons.check_circle_outline, color: AppTheme.success),
+                                   onPressed: () {
+                                      provider.toggleTodo(task.id);
+                                   },
+                                ),
+                              );
+                            },
+                          ),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      },
     );
   }
 }
