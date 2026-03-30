@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import 'package:study_app/database/hive_service.dart';
 import 'package:study_app/models/todo.dart';
+import 'package:study_app/models/todo_subtask.dart';
 
 class TodoProvider extends ChangeNotifier {
   final Box<Todo> _todosBox = HiveService.todosBox;
@@ -43,6 +44,54 @@ class TodoProvider extends ChangeNotifier {
     final todo = _todosBox.get(id);
     if (todo != null) {
       await todo.delete();
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateTodo(String id, String newTask) async {
+    final todo = _todosBox.get(id);
+    if (todo != null) {
+      todo.task = newTask;
+      await todo.save();
+      notifyListeners();
+    }
+  }
+
+  // Sub-task methods
+  Future<void> addSubTask(String todoId, String task) async {
+    final todo = _todosBox.get(todoId);
+    if (todo != null) {
+      todo.subTasks.add(TodoSubTask(task: task));
+      await todo.save();
+      notifyListeners();
+    }
+  }
+
+  Future<void> toggleSubTask(String todoId, String subTaskId) async {
+    final todo = _todosBox.get(todoId);
+    if (todo != null) {
+      final subTask = todo.subTasks.firstWhere((st) => st.id == subTaskId);
+      subTask.isCompleted = !subTask.isCompleted;
+      await todo.save();
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteSubTask(String todoId, String subTaskId) async {
+    final todo = _todosBox.get(todoId);
+    if (todo != null) {
+      todo.subTasks.removeWhere((st) => st.id == subTaskId);
+      await todo.save();
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateSubTask(String todoId, String subTaskId, String newTask) async {
+    final todo = _todosBox.get(todoId);
+    if (todo != null) {
+      final subTask = todo.subTasks.firstWhere((st) => st.id == subTaskId);
+      subTask.task = newTask;
+      await todo.save();
       notifyListeners();
     }
   }

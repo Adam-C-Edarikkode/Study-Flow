@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:study_app/providers/mind_map_provider.dart';
+import 'package:study_app/providers/subject_provider.dart';
+import 'package:study_app/providers/chapter_provider.dart';
 import 'package:study_app/screens/global/mind_map_editor_screen.dart';
 
 class MindMapPage extends StatelessWidget {
@@ -36,8 +38,30 @@ class MindMapPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    String subText = '';
+    if (subjectId != null) {
+      try {
+        final subject = Provider.of<SubjectProvider>(context, listen: false).subjects.firstWhere((s) => s.id == subjectId);
+        subText = subject.name;
+        if (chapterId != null) {
+          final chapter = Provider.of<ChapterProvider>(context, listen: false).chapters.firstWhere((c) => c.id == chapterId);
+          subText += ' > ${chapter.title}';
+        }
+      } catch (_) {}
+    }
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Mind Maps')),
+      appBar: AppBar(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Mind Maps'),
+            if (subText.isNotEmpty)
+              Text(subText, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
+          ],
+        ),
+      ),
       body: Consumer<MindMapProvider>(
         builder: (context, provider, child) {
           final maps = provider.getMindMapsForContext(subjectId, chapterId);
@@ -64,6 +88,7 @@ class MindMapPage extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: null,
         onPressed: () => _showAddDialog(context),
         child: const Icon(Icons.add),
       ),

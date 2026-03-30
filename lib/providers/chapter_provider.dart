@@ -19,6 +19,10 @@ class ChapterProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void refresh() {
+    _loadAllChapters();
+  }
+
   List<Chapter> getChaptersForSubject(String subjectId) {
     return _allChapters.where((c) => c.subjectId == subjectId).toList();
   }

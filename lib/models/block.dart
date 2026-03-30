@@ -13,7 +13,9 @@ enum BlockType {
   @HiveField(3)
   checkbox,
   @HiveField(4)
-  link
+  link,
+  @HiveField(5)
+  subBullet
 }
 
 @HiveType(typeId: 4)

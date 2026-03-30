@@ -1,5 +1,6 @@
 import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
+import 'package:study_app/models/todo_subtask.dart';
 
 part 'todo.g.dart';
 
@@ -9,7 +10,7 @@ class Todo extends HiveObject {
   final String id;
 
   @HiveField(1)
-  final String task;
+  String task;
 
   @HiveField(2)
   bool isCompleted;
@@ -23,6 +24,9 @@ class Todo extends HiveObject {
   @HiveField(5)
   final String? chapterId;
 
+  @HiveField(6)
+  List<TodoSubTask> subTasks;
+
   Todo({
     String? id,
     required this.task,
@@ -30,5 +34,7 @@ class Todo extends HiveObject {
     this.reminder = false,
     this.subjectId,
     this.chapterId,
-  }) : id = id ?? const Uuid().v4();
+    List<TodoSubTask>? subTasks,
+  }) : id = id ?? const Uuid().v4(),
+       subTasks = subTasks ?? [];
 }

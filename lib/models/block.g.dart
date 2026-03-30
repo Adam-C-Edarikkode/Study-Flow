@@ -69,6 +69,8 @@ class BlockTypeAdapter extends TypeAdapter<BlockType> {
         return BlockType.checkbox;
       case 4:
         return BlockType.link;
+      case 5:
+        return BlockType.subBullet;
       default:
         return BlockType.heading;
     }
@@ -91,6 +93,9 @@ class BlockTypeAdapter extends TypeAdapter<BlockType> {
         break;
       case BlockType.link:
         writer.writeByte(4);
+        break;
+      case BlockType.subBullet:
+        writer.writeByte(5);
         break;
     }
   }

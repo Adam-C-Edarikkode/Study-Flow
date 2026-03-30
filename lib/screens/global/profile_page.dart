@@ -1,10 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:study_app/theme/app_theme.dart';
 import 'package:study_app/widgets/custom_card.dart';
 import 'package:provider/provider.dart';
 import 'package:study_app/providers/theme_provider.dart';
 import 'package:study_app/database/hive_service.dart';
 import 'package:study_app/screens/global/settings_page.dart';
+import 'package:study_app/widgets/notification_sheet.dart';
+import 'package:study_app/services/data_export_service.dart';
+import 'package:study_app/services/data_import_service.dart';
+import 'package:study_app/providers/subject_provider.dart';
+import 'package:study_app/providers/chapter_provider.dart';
+import 'package:study_app/providers/academic_provider.dart';
+import 'package:study_app/providers/study_provider.dart';
+import 'package:study_app/providers/mind_map_provider.dart';
+import 'package:study_app/providers/drawing_provider.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -69,32 +79,29 @@ class _ProfilePageState extends State<ProfilePage> {
                   leading: const Icon(Icons.cloud_sync_rounded),
                   title: const Text('Backup & Export'),
                   trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-                  onTap: () {},
+                  onTap: _showExportOptions,
                 ),
                 const Divider(height: 1),
                 ListTile(
                   leading: const Icon(Icons.notifications_active_rounded),
                   title: const Text('Notifications'),
                   trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-                  onTap: () {},
+                  onTap: () => NotificationSheet.show(context),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 32),
-          Center(
-            child: TextButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.logout_rounded, color: Colors.red),
-              label: const Text('Log Out', style: TextStyle(color: Colors.red)),
-            ),
-          )
         ],
       ),
     );
   }
 
   Widget _buildProfileHeader(BuildContext context) {
+    final studyProvider = Provider.of<StudyProvider>(context);
+    final last7DaysMinutes = studyProvider.getChartData(TimeRange.last7Days).fold(0, (sum, val) => sum + val);
+    final hours = last7DaysMinutes ~/ 60;
+    final mins = last7DaysMinutes % 60;
+
     return CustomCard(
       gradient: AppTheme.primaryGradient,
       child: Row(
@@ -127,7 +134,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Total Study Time: 120h',
+                  'Study Time (Last 7d): ${hours}h ${mins}m',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Colors.white.withOpacity(0.9),
                       ),
@@ -137,6 +144,85 @@ class _ProfilePageState extends State<ProfilePage> {
           )
         ],
       ),
+    );
+  }
+
+  void _showExportOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.copy),
+              title: const Text('Copy to Clipboard'),
+              onTap: () async {
+                Navigator.pop(ctx);
+                await DataExportService.exportToClipboard();
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Data exported to clipboard!')));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.file_download),
+              title: const Text('Export to File'),
+              onTap: () async {
+                Navigator.pop(ctx);
+                await DataExportService.exportToFile();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.paste),
+              title: const Text('Import from Clipboard'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _showImportOptions();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showImportOptions() async {
+    final data = await Clipboard.getData('text/plain');
+    if (data?.text != null && data!.text!.trim().isNotEmpty) {
+      if (!mounted) return;
+      _confirmImport(data.text!);
+    } else {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Clipboard is empty!')));
+    }
+  }
+
+  void _confirmImport(String jsonString) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Import Data'),
+        content: const Text('This will OVERWRITE all existing app data and cannot be undone. Are you sure you want to proceed?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final result = await DataImportService.importFromJsonString(jsonString, clearFirst: true);
+              if (mounted) {
+                 Provider.of<SubjectProvider>(context, listen: false).refresh();
+                 Provider.of<ChapterProvider>(context, listen: false).refresh();
+                 Provider.of<StudyProvider>(context, listen: false).refresh();
+                 Provider.of<MindMapProvider>(context, listen: false).refresh();
+                 Provider.of<DrawingProvider>(context, listen: false).refresh();
+                 Provider.of<AcademicProvider>(context, listen: false).refresh();
+                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result.message)));
+                 setState(() {}); // Refresh header
+              }
+            },
+            child: const Text('Import', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      )
     );
   }
 

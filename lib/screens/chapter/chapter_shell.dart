@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:study_app/models/chapter.dart';
-import 'package:study_app/screens/chapter/tabs/chapter_notes_tab.dart';
-import 'package:study_app/screens/chapter/tabs/chapter_add_time_tab.dart';
 import 'package:study_app/screens/chapter/tabs/chapter_performance_tab.dart';
 import 'package:study_app/screens/global/tools_page.dart';
 
@@ -16,7 +14,7 @@ class ChapterShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 4,
+      length: 2,
       child: Scaffold(
         appBar: AppBar(
           title: Column(
@@ -41,18 +39,14 @@ class ChapterShell extends StatelessWidget {
             unselectedLabelColor: Colors.grey,
             indicatorColor: Theme.of(context).primaryColor,
             tabs: const [
-              Tab(text: 'Notes'),
               Tab(text: 'Tools'),
-              Tab(text: 'Add Time'),
               Tab(text: 'Performance'),
             ],
           ),
         ),
         body: TabBarView(
           children: [
-            ChapterNotesTab(chapterId: chapter.id),
             ToolsGrid(specificSubjectId: chapter.subjectId, specificChapterId: chapter.id),
-            ChapterAddTimeTab(subjectId: chapter.subjectId, chapterId: chapter.id),
             ChapterPerformanceTab(subjectId: chapter.subjectId, chapterId: chapter.id),
           ],
         ),

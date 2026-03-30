@@ -3,6 +3,7 @@ import 'package:study_app/screens/global/home_screen.dart';
 import 'package:study_app/screens/global/tools_page.dart';
 import 'package:study_app/screens/global/performance_page.dart';
 import 'package:study_app/screens/global/profile_page.dart';
+import 'package:study_app/screens/academic/academic_page.dart';
 import 'package:provider/provider.dart';
 import 'package:study_app/providers/subject_provider.dart';
 import 'package:study_app/providers/chapter_provider.dart';
@@ -17,11 +18,11 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
-  int get _pageIndex => _currentIndex > 2 ? _currentIndex - 1 : _currentIndex;
 
   final List<Widget> _pages = [
     const HomeScreen(),
     const ToolsPage(),
+    const AcademicPage(),
     const PerformancePage(),
     const ProfilePage(),
   ];
@@ -30,7 +31,7 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(
-        index: _pageIndex,
+        index: _currentIndex,
         children: _pages,
       ),
       bottomNavigationBar: Container(
@@ -49,10 +50,6 @@ class _MainScreenState extends State<MainScreen> {
           showSelectedLabels: false,
           showUnselectedLabels: false,
           onTap: (index) {
-            if (index == 2) {
-              _showAddBottomSheet(context);
-              return;
-            }
             setState(() {
               _currentIndex = index;
             });
@@ -67,8 +64,8 @@ class _MainScreenState extends State<MainScreen> {
               label: 'Tools',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.add_circle_rounded, size: 36),
-              label: 'Add',
+              icon: Icon(Icons.school_rounded),
+              label: 'Academic',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.show_chart_rounded),
@@ -249,7 +246,6 @@ class _MainScreenState extends State<MainScreen> {
 
   void _showAddChapterDialog(BuildContext context, String subjectId) {
     final titleController = TextEditingController();
-    final descriptionController = TextEditingController();
 
     showDialog(
       context: context,
@@ -263,12 +259,6 @@ class _MainScreenState extends State<MainScreen> {
                 controller: titleController,
                 decoration: const InputDecoration(labelText: 'Chapter Title'),
               ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: descriptionController,
-                decoration: const InputDecoration(labelText: 'Description (Optional)'),
-                maxLines: 2,
-              ),
             ],
           ),
           actions: [
@@ -279,10 +269,10 @@ class _MainScreenState extends State<MainScreen> {
             ElevatedButton(
               onPressed: () {
                 if (titleController.text.isNotEmpty) {
-                  Provider.of<ChapterProvider>(context, listen: false).addChapter(
+                   Provider.of<ChapterProvider>(context, listen: false).addChapter(
                     subjectId,
                     titleController.text,
-                    descriptionController.text,
+                    '',
                   );
                   Navigator.pop(context);
                 }

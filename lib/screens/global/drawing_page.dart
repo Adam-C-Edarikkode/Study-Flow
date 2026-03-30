@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:study_app/providers/drawing_provider.dart';
+import 'package:study_app/providers/subject_provider.dart';
+import 'package:study_app/providers/chapter_provider.dart';
 import 'package:study_app/screens/global/drawing_editor_screen.dart';
 
 class DrawingPage extends StatelessWidget {
@@ -37,8 +39,30 @@ class DrawingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    String subText = '';
+    if (subjectId != null) {
+      try {
+        final subject = Provider.of<SubjectProvider>(context, listen: false).subjects.firstWhere((s) => s.id == subjectId);
+        subText = subject.name;
+        if (chapterId != null) {
+          final chapter = Provider.of<ChapterProvider>(context, listen: false).chapters.firstWhere((c) => c.id == chapterId);
+          subText += ' > ${chapter.title}';
+        }
+      } catch (_) {}
+    }
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Freehand Canvas')),
+      appBar: AppBar(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Freehand Canvas'),
+            if (subText.isNotEmpty)
+              Text(subText, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
+          ],
+        ),
+      ),
       body: Consumer<DrawingProvider>(
         builder: (context, provider, child) {
           final items = provider.getDrawingsForContext(subjectId, chapterId);
@@ -64,6 +88,7 @@ class DrawingPage extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: null,
         onPressed: () => _showAddDialog(context),
         child: const Icon(Icons.add),
       ),

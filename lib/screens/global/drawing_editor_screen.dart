@@ -20,6 +20,7 @@ class DrawingEditorScreen extends StatefulWidget {
 class _DrawingEditorScreenState extends State<DrawingEditorScreen> {
   List<DrawingPath> _paths = [];
   DrawingPath? _currentPath;
+  bool _isPanMode = false;
 
   @override
   void initState() {
@@ -86,6 +87,15 @@ class _DrawingEditorScreenState extends State<DrawingEditorScreen> {
                 onPressed: _clearCanvas,
               ),
               IconButton(
+                icon: Icon(_isPanMode ? Icons.pan_tool : Icons.edit),
+                tooltip: _isPanMode ? 'Pan Mode' : 'Draw Mode',
+                onPressed: () {
+                  setState(() {
+                    _isPanMode = !_isPanMode;
+                  });
+                },
+              ),
+              IconButton(
                 icon: const Icon(Icons.undo),
                 tooltip: 'Undo',
                 onPressed: () {
@@ -99,28 +109,36 @@ class _DrawingEditorScreenState extends State<DrawingEditorScreen> {
               ),
             ],
           ),
-          body: GestureDetector(
-            onPanStart: (details) {
-               setState(() {
-                 _currentPath = DrawingPath([details.localPosition]);
-                 _paths.add(_currentPath!);
-               });
-            },
-            onPanUpdate: (details) {
-               setState(() {
-                 _currentPath?.points.add(details.localPosition);
-               });
-            },
-            onPanEnd: (details) {
-               _saveDrawing();
-               _currentPath = null;
-            },
-            child: Container(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              width: double.infinity,
-              height: double.infinity,
-              child: CustomPaint(
-                painter: _FreehandPainter(_paths, Theme.of(context).primaryColor),
+          body: InteractiveViewer(
+            constrained: false,
+            scaleEnabled: true,
+            panEnabled: _isPanMode, // Only pan if mode is enabled
+            minScale: 0.1,
+            maxScale: 5.0,
+            boundaryMargin: const EdgeInsets.all(2000), // Allow panning far away
+            child: GestureDetector(
+              onPanStart: _isPanMode ? null : (details) {
+                 setState(() {
+                   _currentPath = DrawingPath([details.localPosition]);
+                   _paths.add(_currentPath!);
+                 });
+              },
+              onPanUpdate: _isPanMode ? null : (details) {
+                 setState(() {
+                   _currentPath?.points.add(details.localPosition);
+                 });
+              },
+              onPanEnd: _isPanMode ? null : (details) {
+                 _saveDrawing();
+                 _currentPath = null;
+              },
+              child: Container(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                width: 5000, // Very large canvas
+                height: 5000,
+                child: CustomPaint(
+                  painter: _FreehandPainter(_paths, Theme.of(context).primaryColor),
+                ),
               ),
             ),
           ),

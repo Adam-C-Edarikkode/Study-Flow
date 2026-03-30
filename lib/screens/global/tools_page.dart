@@ -7,6 +7,7 @@ import 'package:study_app/providers/theme_provider.dart';
 import 'package:study_app/screens/chapter/tabs/chapter_add_time_tab.dart';
 import 'package:study_app/screens/subject/tabs/subject_notes_tab.dart';
 import 'package:study_app/screens/chapter/tabs/chapter_notes_tab.dart';
+import 'package:study_app/providers/chapter_provider.dart';
 import 'package:study_app/screens/global/todo_list_page.dart';
 import 'package:study_app/screens/global/flashcard_page.dart';
 import 'package:study_app/screens/global/mind_map_page.dart';
@@ -74,8 +75,29 @@ class ToolsGrid extends StatelessWidget {
             }
             if (tool['title'] == 'Study Timer' || tool['title'] == 'Quick Notes') {
               if (specificSubjectId != null) {
+                 final subProvider = Provider.of<SubjectProvider>(context, listen: false);
+                 final chapProvider = Provider.of<ChapterProvider>(context, listen: false);
+                 String subText = '';
+                 try {
+                   final subject = subProvider.subjects.firstWhere((s) => s.id == specificSubjectId);
+                   subText = subject.name;
+                   if (specificChapterId != null) {
+                     final chapter = chapProvider.chapters.firstWhere((c) => c.id == specificChapterId);
+                     subText += ' > ${chapter.title}';
+                   }
+                 } catch (_) {}
+
                  Navigator.push(context, MaterialPageRoute(builder: (_) => Scaffold(
-                   appBar: AppBar(title: Text(tool['title'])),
+                   appBar: AppBar(
+                     title: Column(
+                       crossAxisAlignment: CrossAxisAlignment.start,
+                       mainAxisSize: MainAxisSize.min,
+                       children: [
+                         Text(tool['title']),
+                         Text(subText, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
+                       ],
+                     ),
+                   ),
                    body: tool['title'] == 'Study Timer' 
                        ? ChapterAddTimeTab(subjectId: specificSubjectId!, chapterId: specificChapterId)
                        : (specificChapterId != null 
@@ -170,26 +192,35 @@ class ToolsGrid extends StatelessWidget {
   }
 
   void _navigateToTool(BuildContext context, bool isTimer, String subjectId) {
-    if (isTimer) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => Scaffold(
-            appBar: AppBar(title: const Text('Study Timer')),
-            body: ChapterAddTimeTab(subjectId: subjectId),
+    final provider = Provider.of<SubjectProvider>(context, listen: false);
+    String subjectName = 'General';
+    try {
+      if (subjectId != 'general') {
+        subjectName = provider.subjects.firstWhere((s) => s.id == subjectId).name;
+      }
+    } catch (_) {}
+
+    final String toolName = isTimer ? 'Study Timer' : 'Quick Notes';
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => Scaffold(
+          appBar: AppBar(
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(toolName),
+                Text(subjectName, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
+              ],
+            ),
           ),
+          body: isTimer 
+            ? ChapterAddTimeTab(subjectId: subjectId)
+            : SubjectNotesTab(subjectId: subjectId),
         ),
-      );
-    } else {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => Scaffold(
-            appBar: AppBar(title: const Text('Quick Notes')),
-            body: SubjectNotesTab(subjectId: subjectId),
-          ),
-        ),
-      );
-    }
+      ),
+    );
   }
 }

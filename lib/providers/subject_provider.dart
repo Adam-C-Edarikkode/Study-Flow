@@ -19,6 +19,10 @@ class SubjectProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void refresh() {
+    _loadSubjects();
+  }
+
   void addSubject(String name, int colorValue) {
     final newSubject = Subject(
       id: _uuid.v4(),

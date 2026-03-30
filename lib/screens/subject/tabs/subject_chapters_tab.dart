@@ -103,6 +103,7 @@ class SubjectChaptersTab extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: null,
         onPressed: () => _showAddChapterDialog(context),
         child: const Icon(Icons.add),
       ),
@@ -111,7 +112,6 @@ class SubjectChaptersTab extends StatelessWidget {
 
   void _showAddChapterDialog(BuildContext context) {
     final titleController = TextEditingController();
-    final descriptionController = TextEditingController();
 
     showDialog(
       context: context,
@@ -124,12 +124,6 @@ class SubjectChaptersTab extends StatelessWidget {
               TextField(
                 controller: titleController,
                 decoration: const InputDecoration(labelText: 'Chapter Title'),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: descriptionController,
-                decoration: const InputDecoration(labelText: 'Description (Optional)'),
-                maxLines: 2,
               ),
             ],
           ),
@@ -144,7 +138,7 @@ class SubjectChaptersTab extends StatelessWidget {
                   Provider.of<ChapterProvider>(context, listen: false).addChapter(
                     subjectId,
                     titleController.text,
-                    descriptionController.text,
+                    '',
                   );
                   Navigator.pop(context);
                 }

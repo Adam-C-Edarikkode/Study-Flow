@@ -12,6 +12,7 @@ import 'package:study_app/providers/todo_provider.dart';
 import 'package:study_app/providers/flashcard_provider.dart';
 import 'package:study_app/providers/mind_map_provider.dart';
 import 'package:study_app/providers/drawing_provider.dart';
+import 'package:study_app/providers/academic_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +29,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => FlashcardProvider()),
         ChangeNotifierProvider(create: (_) => MindMapProvider()),
         ChangeNotifierProvider(create: (_) => DrawingProvider()),
+        ChangeNotifierProvider(create: (_) => AcademicProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
       child: const StudyApp(),
@@ -43,7 +45,7 @@ class StudyApp extends StatelessWidget {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return MaterialApp(
-          title: 'Study Productivity App',
+          title: 'Study Flow',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,

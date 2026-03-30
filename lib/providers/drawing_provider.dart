@@ -34,4 +34,8 @@ class DrawingProvider extends ChangeNotifier {
     await _drawingsBox.delete(id);
     notifyListeners();
   }
+
+  void refresh() {
+    notifyListeners();
+  }
 }

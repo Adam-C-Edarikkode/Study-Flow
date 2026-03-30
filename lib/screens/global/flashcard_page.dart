@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:study_app/theme/app_theme.dart';
 import 'package:study_app/widgets/custom_card.dart';
 import 'package:study_app/providers/flashcard_provider.dart';
+import 'package:study_app/providers/subject_provider.dart';
+import 'package:study_app/providers/chapter_provider.dart';
 
 class FlashcardPage extends StatefulWidget {
   final String? subjectId;
@@ -73,6 +75,18 @@ class _FlashcardPageState extends State<FlashcardPage> {
 
   @override
   Widget build(BuildContext context) {
+    String subText = '';
+    if (widget.subjectId != null) {
+      try {
+        final subject = Provider.of<SubjectProvider>(context, listen: false).subjects.firstWhere((s) => s.id == widget.subjectId);
+        subText = subject.name;
+        if (widget.chapterId != null) {
+          final chapter = Provider.of<ChapterProvider>(context, listen: false).chapters.firstWhere((c) => c.id == widget.chapterId);
+          subText += ' > ${chapter.title}';
+        }
+      } catch (_) {}
+    }
+
     return Consumer<FlashcardProvider>(
       builder: (context, provider, child) {
         final cards = provider.getFlashcardsForContext(widget.subjectId, widget.chapterId);
@@ -84,8 +98,20 @@ class _FlashcardPageState extends State<FlashcardPage> {
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Flashcards'),
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Flashcards'),
+                if (subText.isNotEmpty)
+                  Text(subText, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
+              ],
+            ),
             actions: [
+              IconButton(
+                icon: const Icon(Icons.add),
+                onPressed: _showAddDialog,
+              ),
               if (cards.isNotEmpty)
                 IconButton(
                   icon: const Icon(Icons.delete_outline),
@@ -138,12 +164,9 @@ class _FlashcardPageState extends State<FlashcardPage> {
                     const SizedBox(height: 48),
                   ],
                 ),
-          floatingActionButton: FloatingActionButton(
-            onPressed: _showAddDialog,
-            child: const Icon(Icons.add),
-          ),
+      
         );
-      },
+      }
     );
   }
 }

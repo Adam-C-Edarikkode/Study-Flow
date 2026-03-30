@@ -10,6 +10,7 @@ import 'package:study_app/providers/note_provider.dart';
 import 'package:study_app/providers/todo_provider.dart';
 import 'package:study_app/models/subject.dart';
 import 'package:study_app/screens/global/search_screen.dart';
+import 'package:study_app/widgets/notification_sheet.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -52,6 +53,7 @@ class HomeScreen extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: null,
         onPressed: () => _showAddSubjectDialog(context),
         child: const Icon(Icons.add),
       ),
@@ -59,9 +61,17 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildSubjectCard(BuildContext context, Subject subject) {
-    // Generate a pseudo-random gradient based on the colorValue
+    // Generate a vibrant gradient based on the selected color
     final baseColor = Color(subject.colorValue);
-    final gradient = LinearGradient(colors: [baseColor.withOpacity(0.8), baseColor]);
+    final hsl = HSLColor.fromColor(baseColor);
+    final gradient = LinearGradient(
+      colors: [
+        hsl.withLightness((hsl.lightness + 0.1).clamp(0.0, 1.0)).toColor(),
+        hsl.withLightness((hsl.lightness - 0.1).clamp(0.0, 1.0)).toColor(),
+      ],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
 
     return Consumer<ChapterProvider>(
       builder: (context, chapterProvider, child) {
@@ -288,55 +298,6 @@ class HomeScreen extends StatelessWidget {
   }
 
   void _showNotifications(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (context) {
-        return DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: 0.5,
-          maxChildSize: 0.9,
-          builder: (context, scrollController) {
-            return Consumer<TodoProvider>(
-              builder: (context, provider, child) {
-                final incompleted = provider.todos.where((t) => !t.isCompleted).toList();
-                
-                return Column(
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: Text('Pending Tasks', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                    ),
-                    const Divider(height: 1),
-                    Expanded(
-                      child: incompleted.isEmpty 
-                        ? const Center(child: Text('All caught up!'))
-                        : ListView.builder(
-                            controller: scrollController,
-                            itemCount: incompleted.length,
-                            itemBuilder: (context, index) {
-                              final task = incompleted[index];
-                              return ListTile(
-                                leading: const Icon(Icons.circle_outlined, color: Colors.grey),
-                                title: Text(task.task),
-                                trailing: IconButton(
-                                   icon: const Icon(Icons.check_circle_outline, color: AppTheme.success),
-                                   onPressed: () {
-                                      provider.toggleTodo(task.id);
-                                   },
-                                ),
-                              );
-                            },
-                          ),
-                    ),
-                  ],
-                );
-              },
-            );
-          },
-        );
-      },
-    );
+    NotificationSheet.show(context);
   }
 }

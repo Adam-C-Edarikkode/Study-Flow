@@ -4,6 +4,7 @@ import 'package:study_app/providers/note_provider.dart';
 import 'package:study_app/models/note.dart';
 import 'package:study_app/models/block.dart';
 import 'package:study_app/database/hive_service.dart';
+import 'package:study_app/services/pdf_export_service.dart';
 
 class NoteEditorScreen extends StatefulWidget {
   final String noteId;
@@ -17,6 +18,7 @@ class NoteEditorScreen extends StatefulWidget {
 class _NoteEditorScreenState extends State<NoteEditorScreen> {
   final TextEditingController _titleController = TextEditingController();
   final FocusNode _titleFocus = FocusNode();
+  bool _isExporting = false;
 
   @override
   void initState() {
@@ -81,6 +83,28 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
           appBar: AppBar(
             title: const Text('Edit Note'),
             actions: [
+              if (_isExporting)
+                const Center(child: Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))),
+              if (!_isExporting)
+                IconButton(
+                  icon: const Icon(Icons.picture_as_pdf_outlined),
+                  tooltip: 'Export as PDF',
+                  onPressed: () async {
+                    setState(() => _isExporting = true);
+                    try {
+                      _titleFocus.unfocus();
+                      FocusScope.of(context).unfocus();
+                      await Future.delayed(const Duration(milliseconds: 300));
+                      if (note != null) {
+                         await PdfExportService.exportNoteToPdf(note);
+                      }
+                    } catch (e) {
+                      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Export failed: $e')));
+                    } finally {
+                      if (mounted) setState(() => _isExporting = false);
+                    }
+                  },
+                ),
               IconButton(
                 icon: const Icon(Icons.delete_outline),
                 onPressed: () {
@@ -180,9 +204,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _toolbarBtn(Icons.title, 'H1', () => provider.addBlockToNote(widget.noteId, BlockType.heading, "New Heading")),
+              _toolbarBtn(Icons.title, 'H1', () => provider.addBlockToNote(widget.noteId, BlockType.heading, "")),
               _toolbarBtn(Icons.short_text, 'Text', () => provider.addBlockToNote(widget.noteId, BlockType.text, "")),
               _toolbarBtn(Icons.format_list_bulleted, 'Bullet', () => provider.addBlockToNote(widget.noteId, BlockType.bullet, "")),
+              _toolbarBtn(Icons.subdirectory_arrow_right, 'Sub-bullet', () => provider.addBlockToNote(widget.noteId, BlockType.subBullet, "")),
               _toolbarBtn(Icons.check_box_outlined, 'Task', () => provider.addBlockToNote(widget.noteId, BlockType.checkbox, "")),
               _toolbarBtn(Icons.link, 'Link', () => provider.addBlockToNote(widget.noteId, BlockType.link, "")),
             ],
@@ -270,77 +295,109 @@ class _BlockEditorState extends State<_BlockEditor> {
         );
         break;
       case BlockType.text:
-         contentWidget = TextField(
-          controller: _controller,
-          focusNode: _focusNode,
-          style: Theme.of(context).textTheme.bodyLarge,
-          maxLines: null,
-          decoration: const InputDecoration(border: InputBorder.none, hintText: 'Text...', isDense: true, contentPadding: EdgeInsets.symmetric(vertical: 2.0)),
-        );
+         contentWidget = Padding(
+          padding: const EdgeInsets.only(left: 12.0),
+          child: TextField(
+            controller: _controller,
+            focusNode: _focusNode,
+            style: Theme.of(context).textTheme.bodyLarge,
+            maxLines: null,
+            decoration: const InputDecoration(border: InputBorder.none, hintText: 'Text...', isDense: true, contentPadding: EdgeInsets.symmetric(vertical: 2.0)),
+          ),
+         );
         break;
       case BlockType.bullet:
-        contentWidget = Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Padding(padding: EdgeInsets.only(top: 6.0, right: 8.0), child: Text("•", style: TextStyle(fontSize: 18))),
-            Expanded(
-              child: TextField(
-                controller: _controller,
-                focusNode: _focusNode,
-                style: Theme.of(context).textTheme.bodyLarge,
-                maxLines: null,
-                decoration: const InputDecoration(border: InputBorder.none, hintText: 'Bullet point...', isDense: true, contentPadding: EdgeInsets.symmetric(vertical: 2.0)),
+        contentWidget = Padding(
+          padding: const EdgeInsets.only(left: 12.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(padding: EdgeInsets.only(top: 6.0, right: 8.0), child: Text("•", style: TextStyle(fontSize: 18))),
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  focusNode: _focusNode,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                  maxLines: null,
+                  decoration: const InputDecoration(border: InputBorder.none, hintText: 'Bullet point...', isDense: true, contentPadding: EdgeInsets.symmetric(vertical: 2.0)),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
+        );
+        break;
+      case BlockType.subBullet:
+        contentWidget = Padding(
+          padding: const EdgeInsets.only(left: 36.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(padding: EdgeInsets.only(top: 6.0, right: 8.0), child: Text("◦", style: TextStyle(fontSize: 18))),
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  focusNode: _focusNode,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                  maxLines: null,
+                  decoration: const InputDecoration(border: InputBorder.none, hintText: 'Sub-bullet...', isDense: true, contentPadding: EdgeInsets.symmetric(vertical: 2.0)),
+                ),
+              ),
+            ],
+          ),
         );
         break;
       case BlockType.checkbox:
-        contentWidget = Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Checkbox(
-              value: widget.block.isChecked,
-              onChanged: (val) {
-                provider.toggleCheckboxBlock(widget.noteId, widget.block.id);
-                setState(() => widget.block.isChecked = val ?? false);
-              },
-            ),
-            Expanded(
-              child: TextField(
-                controller: _controller,
-                focusNode: _focusNode,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  decoration: widget.block.isChecked ? TextDecoration.lineThrough : null,
-                  color: widget.block.isChecked ? Colors.grey : null,
-                ),
-                maxLines: null,
-                decoration: const InputDecoration(border: InputBorder.none, hintText: 'Task...'),
+        contentWidget = Padding(
+          padding: const EdgeInsets.only(left: 2.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Checkbox(
+                value: widget.block.isChecked,
+                onChanged: (val) {
+                  provider.toggleCheckboxBlock(widget.noteId, widget.block.id);
+                  setState(() => widget.block.isChecked = val ?? false);
+                },
               ),
-            ),
-          ],
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  focusNode: _focusNode,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    decoration: widget.block.isChecked ? TextDecoration.lineThrough : null,
+                    color: widget.block.isChecked ? Colors.grey : null,
+                  ),
+                  maxLines: null,
+                  decoration: const InputDecoration(border: InputBorder.none, hintText: 'Task...'),
+                ),
+              ),
+            ],
+          ),
         );
         break;
       case BlockType.link:
-        contentWidget = Row(
-          children: [
-            const Icon(Icons.link, color: Colors.blue),
-            const SizedBox(width: 8),
-            Expanded(
-              child: TextField(
-                controller: _controller,
-                focusNode: _focusNode,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.blue),
-                decoration: const InputDecoration(border: InputBorder.none, hintText: 'Link...'),
+        contentWidget = Padding(
+          padding: const EdgeInsets.only(left: 12.0),
+          child: Row(
+            children: [
+              const Icon(Icons.link, color: Colors.blue),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  focusNode: _focusNode,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.blue),
+                  decoration: const InputDecoration(border: InputBorder.none, hintText: 'Link...'),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         );
         break;
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2.0),
+      padding: const EdgeInsets.symmetric(vertical: 0.5),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

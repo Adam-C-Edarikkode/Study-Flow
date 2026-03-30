@@ -63,29 +63,38 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Colors.white.withOpacity(0.1),
                     shape: BoxShape.circle,
-                    boxShadow: [AppTheme.softShadowLight],
                   ),
-                  child: const Icon(
-                    Icons.school_rounded,
-                    size: 80,
-                    color: AppTheme.primaryColor,
+                  child: ClipOval(
+                    child: Image.asset(
+                      'assets/logo.png',
+                      height: 120,
+                      width: 120,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => const Icon(
+                        Icons.school_rounded,
+                        size: 80,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'StudySync',
+                  'Study Flow',
                   style: Theme.of(context).textTheme.displayMedium?.copyWith(
                         color: Colors.white,
                         letterSpacing: 1.5,
+                        fontWeight: FontWeight.bold,
                       ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Your Productivity Companion',
+                  'your productivity companion',
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Colors.white.withOpacity(0.8),
+                        color: Colors.white.withOpacity(0.9),
+                        fontStyle: FontStyle.italic,
                       ),
                 ),
               ],

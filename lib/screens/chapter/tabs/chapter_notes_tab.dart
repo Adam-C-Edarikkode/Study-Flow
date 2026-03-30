@@ -65,6 +65,7 @@ class ChapterNotesTab extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: null,
         onPressed: () => _showAddNoteDialog(context),
         icon: const Icon(Icons.note_add),
         label: const Text('New Note'),

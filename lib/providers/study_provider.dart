@@ -67,6 +67,10 @@ class StudyProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void refresh() {
+    _loadSessions();
+  }
+
   void addManualSession(String subjectId, int durationMinutes, {String? chapterId}) {
     final newSession = StudySession(
       id: _uuid.v4(),

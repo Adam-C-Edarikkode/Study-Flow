@@ -48,4 +48,8 @@ class MindMapProvider extends ChangeNotifier {
     await _mindMapsBox.delete(id);
     notifyListeners();
   }
+
+  void refresh() {
+    notifyListeners();
+  }
 }
