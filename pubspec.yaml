@@ -45,6 +45,11 @@ dependencies:
   path_provider: ^2.1.5
   pdf: ^3.10.8
   flutter_launcher_icons: ^0.13.1
+  file_picker: ^10.3.10
+  open_filex: ^4.7.0
+  flutter_local_notifications: ^17.2.4
+  timezone: ^0.9.4
+  pdfrx: ^2.2.24
 
 dev_dependencies:
   flutter_test:
